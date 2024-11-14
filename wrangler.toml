@@ -1,0 +1,18 @@
+name = "v2ray"
+main = "_worker.js"
+
+kv_namespaces = [
+  { binding = "UUIDS_KV", id = "8645a796db5b497a9ba068c119eb16a4" },
+  { binding = "URL_LOGS", id = "d901591aba464a678690fae600decb71" }
+]
+
+account_id = "939fcf42335adbc0c951edb3784e7e4c"
+compatibility_date = "2023-10-05"
+
+[observability]
+enabled = true
+head_sampling_rate = 1
+
+routes = [
+  { pattern = "vpnps.codetech.click", custom_domain = true }
+]

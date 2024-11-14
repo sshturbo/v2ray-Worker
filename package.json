@@ -1,0 +1,18 @@
+{
+  "name": "v2ray-worker",
+  "version": "1.0.0",
+  "description": "Cloudflare Worker for V2Ray",
+  "main": "_worker.js",
+  "scripts": {
+    "start": "wrangler dev",
+    "deploy": "wrangler publish"
+  },
+  "author": "Jefferson Hipolito",
+  "license": "MIT",
+  "dependencies": {
+    "@cloudflare/workers-types": "^3.0.0"
+  },
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}
