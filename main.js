@@ -1,7 +1,12 @@
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+
 // _worker.js
 import { connect } from "cloudflare:sockets";
 import { handleRequest as checkUserHandler } from './checkuser.js';
 import { socks5Connect, socks5AddressParser } from './socks5.js';
+import { DNS_SERVERS, DNS_PORT, tryDNSServer, handleDNSQuery } from './dns.js';
+
 var userID = "052f238a-ed91-4134-82c9-f158a8baf818";
 var proxyIP = "";
 var sub = "";
@@ -199,12 +204,7 @@ async function vlessOverWSHandler(request) {
 				return;
 			}
 			if (isUDP) {
-				if (portRemote === 53) {
-					isDns = true;
-				} else {
-					throw new Error("Proxy UDP est\xE1 habilitado apenas para DNS (porta 53)");
-					return;
-				}
+				isDns = portRemote === 53;
 			}
 			const vlessResponseHeader = new Uint8Array([vlessVersion[0], 0]);
 			const rawClientData = chunk.slice(rawDataIndex);
@@ -229,6 +229,7 @@ async function vlessOverWSHandler(request) {
 		webSocket: client
 	});
 }
+__name(vlessOverWSHandler, "vlessOverWSHandler");
 
 async function handleTCPOutBound(remoteSocket, addressType, addressRemote, portRemote, rawClientData, webSocket, vlessResponseHeader, log) {
 	async function connectAndWrite(address, port) {
@@ -244,6 +245,7 @@ async function handleTCPOutBound(remoteSocket, addressType, addressRemote, portR
 	let tcpSocket = await connectAndWrite(addressRemote, portRemote);
 	remoteSocketToWS(tcpSocket, webSocket, vlessResponseHeader, null, log);
 }
+__name(handleTCPOutBound, "handleTCPOutBound");
 
 function makeReadableWebSocketStream(webSocketServer, earlyDataHeader, log) {
 	let readableStreamCancel = false;
@@ -290,6 +292,7 @@ function makeReadableWebSocketStream(webSocketServer, earlyDataHeader, log) {
 	});
 	return stream;
 }
+__name(makeReadableWebSocketStream, "makeReadableWebSocketStream");
 
 function processVlessHeader(vlessBuffer) {
 	if (vlessBuffer.byteLength < 24) {
@@ -381,6 +384,7 @@ function processVlessHeader(vlessBuffer) {
 		// Whether it is a UDP request
 	};
 }
+__name(processVlessHeader, "processVlessHeader");
 
 async function remoteSocketToWS(remoteSocket, webSocket, vlessResponseHeader, retry, log) {
 	let remoteChunkCount = 0;
@@ -429,6 +433,7 @@ async function remoteSocketToWS(remoteSocket, webSocket, vlessResponseHeader, re
 		retry();
 	}
 }
+__name(remoteSocketToWS, "remoteSocketToWS");
 
 function base64ToArrayBuffer(base64Str) {
 	if (!base64Str) {
@@ -443,11 +448,13 @@ function base64ToArrayBuffer(base64Str) {
 		return { error };
 	}
 }
+__name(base64ToArrayBuffer, "base64ToArrayBuffer");
 
 function isValidUUID(uuid) {
 	const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[4][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 	return uuidRegex.test(uuid);
 }
+__name(isValidUUID, "isValidUUID");
 
 var WS_READY_STATE_OPEN = 1;
 var WS_READY_STATE_CLOSING = 2;
@@ -460,6 +467,7 @@ function safeCloseWebSocket(socket) {
 		console.error("erro safeCloseWebSocket", error);
 	}
 }
+__name(safeCloseWebSocket, "safeCloseWebSocket");
 
 var byteToHex = [];
 for (let i = 0; i < 256; ++i) {
@@ -468,6 +476,8 @@ for (let i = 0; i < 256; ++i) {
 function unsafeStringify(arr, offset = 0) {
 	return (byteToHex[arr[offset + 0]] + byteToHex[arr[offset + 1]] + byteToHex[arr[offset + 2]] + byteToHex[arr[offset + 3]] + "-" + byteToHex[arr[offset + 4]] + byteToHex[arr[offset + 5]] + "-" + byteToHex[arr[offset + 6]] + byteToHex[arr[offset + 7]] + "-" + byteToHex[arr[offset + 8]] + byteToHex[arr[offset + 9]] + "-" + byteToHex[arr[offset + 10]] + byteToHex[arr[offset + 11]] + byteToHex[arr[offset + 12]] + byteToHex[arr[offset + 13]] + byteToHex[arr[offset + 14]] + byteToHex[arr[offset + 15]]).toLowerCase();
 }
+__name(unsafeStringify, "unsafeStringify");
+
 
 function stringify(arr, offset = 0) {
 	const uuid = unsafeStringify(arr, offset);
@@ -476,59 +486,7 @@ function stringify(arr, offset = 0) {
 	}
 	return uuid;
 }
-
-var DNS_SERVERS = [
-	{ hostname: "8.8.8.8", provider: "Google" },
-	{ hostname: "8.8.4.4", provider: "Google" },
-	{ hostname: "1.1.1.1", provider: "Cloudflare" }
-];
-
-var DNS_PORT = 53;
-async function tryDNSServer(serverInfo, udpChunk, webSocket, vlessHeader, log) {
-	const tcpSocket = connect({
-		hostname: serverInfo.hostname,
-		port: DNS_PORT
-	});
-	log(`Conectado a ${serverInfo.hostname}:${DNS_PORT} (${serverInfo.provider})`);
-	const writer = tcpSocket.writable.getWriter();
-	await writer.write(udpChunk);
-	writer.releaseLock();
-	return tcpSocket;
-}
-
-async function handleDNSQuery(udpChunk, webSocket, vlessResponseHeader, log) {
-	let lastError = null;
-	let vlessHeader = vlessResponseHeader;
-	for (const dnsServer of DNS_SERVERS) {
-		try {
-			const tcpSocket = await tryDNSServer(dnsServer, udpChunk, webSocket, vlessHeader, log);
-			await tcpSocket.readable.pipeTo(new WritableStream({
-				async write(chunk) {
-					if (webSocket.readyState === WS_READY_STATE_OPEN) {
-						if (vlessHeader) {
-							webSocket.send(await new Blob([vlessHeader, chunk]).arrayBuffer());
-							vlessHeader = null;
-						} else {
-							webSocket.send(chunk);
-						}
-					}
-				},
-				close() {
-					log(`Conex\xE3o TCP do servidor DNS (${dnsServer.hostname}) est\xE1 fechada`);
-				},
-				abort(reason) {
-					console.error(`Conex\xE3o TCP do servidor DNS (${dnsServer.hostname}) abortada`, reason);
-				}
-			}));
-			return;
-		} catch (error) {
-			lastError = error;
-			log(`Falha ao conectar com ${dnsServer.hostname}: ${error.message}`);
-			continue;
-		}
-	}
-	console.error(`Todos os servidores DNS falharam. \xDAltimo erro: ${lastError.message}`);
-}
+__name(stringify, "stringify");
 
 async function MD5MD5(text) {
 	const encoder = new TextEncoder();
@@ -540,6 +498,7 @@ async function MD5MD5(text) {
 	const secondHex = secondPassArray.map((b) => b.toString(16).padStart(2, "0")).join("");
 	return secondHex.toLowerCase();
 }
+__name(MD5MD5, "MD5MD5");
 
 async function ADD(envadd) {
 	var addtext = envadd.replace(/[	|"'\r\n]+/g, ",").replace(/,+/g, ",");
@@ -550,6 +509,7 @@ async function ADD(envadd) {
 	const add = addtext.split(",");
 	return add;
 }
+__name(ADD, "ADD");
 
 var what_is_this_written_by = "dmxlc3M=";
 function configuration(UUID, domainAddress) {
@@ -568,6 +528,7 @@ function configuration(UUID, domainAddress) {
 	const v2ray = `${protocolType}://${userID2}@${address}:${port}?encryption=${encryptionMethod}&security=${transportSecurity[0]}&sni=${SNI}&fp=${fingerprint}&type=${transportProtocol}&host=${disguiseDomain}&path=${encodeURIComponent(path)}#${encodeURIComponent(alias)}`;
 	return [v2ray];
 }
+__name(configuration, "configuration");
 
 var subParams = ["v2ray"];
 async function getVLESSConfig(userID2, hostName, sub2, UA, RproxyIP2, _url) {
@@ -612,5 +573,8 @@ ${v2ray}
 		return v2ray;
 	}
 }
+__name(getVLESSConfig, "getVLESSConfig");
 
-export default worker_default;
+export {
+	worker_default as default
+};
