@@ -1,5 +1,5 @@
 name = "v2ray"
-main = "_worker.js"
+main = "main.js"
 
 kv_namespaces = [
   { binding = "UUIDS_KV", id = "8645a796db5b497a9ba068c119eb16a4" },
