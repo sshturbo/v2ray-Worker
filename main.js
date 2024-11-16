@@ -23,7 +23,6 @@ var noTLS = "false";
 var proxyIPs;
 var RproxyIP = "false";
 var subconfig = "";
-var DLS = 8;
 var worker_default = {
 	/**
 	 * @param {import("@cloudflare/workers-types").Request} request
@@ -39,14 +38,12 @@ var worker_default = {
 		}
 		try {
 			const UA = request.headers.get("User-Agent") || "null";
-			const userAgent = UA.toLowerCase();
 			userID = (env.UUID || userID).toLowerCase();
 			const currentDate = /* @__PURE__ */ new Date();
 			currentDate.setHours(0, 0, 0, 0);
 			const timestamp = Math.ceil(currentDate.getTime() / 1e3);
 			const fakeUserIDMD5 = await MD5MD5(`${userID}${timestamp}`);
 			fakeUserID = fakeUserIDMD5.slice(0, 8) + "-" + fakeUserIDMD5.slice(8, 12) + "-" + fakeUserIDMD5.slice(12, 16) + "-" + fakeUserIDMD5.slice(16, 20) + "-" + fakeUserIDMD5.slice(20);
-			console.log(`Fake UUID: ${fakeUserID}`);
 			proxyIP = env.PROXYIP || proxyIP;
 			proxyIPs = await ADD(proxyIP);
 			proxyIP = proxyIPs[Math.floor(Math.random() * proxyIPs.length)];
@@ -74,17 +71,6 @@ var worker_default = {
 			} else {
 				RproxyIP = env.RPROXYIP || !proxyIP ? "true" : "false";
 			}
-			if (env.ADD)
-				addresses = await ADD(env.ADD);
-			if (env.ADDAPI)
-				addressesapi = await ADD(env.ADDAPI);
-			if (env.ADDNOTLS)
-				addressesnotls = await ADD(env.ADDNOTLS);
-			if (env.ADDNOTLSAPI)
-				addressesnotlsapi = await ADD(env.ADDNOTLSAPI);
-			if (env.ADDCSV)
-				addressescsv = await ADD(env.ADDCSV);
-			DLS = env.DLS || DLS;
 			const upgradeHeader = request.headers.get("Upgrade");
 			const url = new URL(request.url);
 			if (url.searchParams.has("sub") && url.searchParams.get("sub") !== "")
