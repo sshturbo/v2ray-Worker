@@ -418,7 +418,6 @@ async function remoteSocketToWS(remoteSocket, webSocket, vlessResponseHeader, re
 }
 __name(remoteSocketToWS, "remoteSocketToWS");
 
-
 var WS_READY_STATE_OPEN = 1;
 var WS_READY_STATE_CLOSING = 2;
 function safeCloseWebSocket(socket) {
