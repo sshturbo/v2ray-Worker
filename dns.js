@@ -1,8 +1,5 @@
 import { connect } from "cloudflare:sockets";
 
-// Define WS_READY_STATE_OPEN locally
-const WS_READY_STATE_OPEN = 1;
-
 export const DNS_SERVERS = [
     { hostname: "8.8.8.8", provider: "Google" },
     { hostname: "8.8.4.4", provider: "Google" },

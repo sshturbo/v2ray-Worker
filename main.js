@@ -7,6 +7,8 @@ import { handleRequest as checkUserHandler } from './checkuser.js';
 import { socks5Connect, socks5AddressParser } from './socks5.js';
 import { DNS_SERVERS, DNS_PORT, tryDNSServer, handleDNSQuery } from './dns.js';
 import { getVLESSConfig } from './vlessConfig.js';
+import { isValidUUID, unsafeStringify, stringify, MD5MD5 } from './uuidUtils.js';
+import { ADD, base64ToArrayBuffer } from './generalUtils.js';
 
 var userID = "052f238a-ed91-4134-82c9-f158a8baf818";
 var proxyIP = "";
@@ -416,26 +418,6 @@ async function remoteSocketToWS(remoteSocket, webSocket, vlessResponseHeader, re
 }
 __name(remoteSocketToWS, "remoteSocketToWS");
 
-function base64ToArrayBuffer(base64Str) {
-	if (!base64Str) {
-		return { error: null };
-	}
-	try {
-		base64Str = base64Str.replace(/-/g, "+").replace(/_/g, "/");
-		const decode = atob(base64Str);
-		const arryBuffer = Uint8Array.from(decode, (c) => c.charCodeAt(0));
-		return { earlyData: arryBuffer.buffer, error: null };
-	} catch (error) {
-		return { error };
-	}
-}
-__name(base64ToArrayBuffer, "base64ToArrayBuffer");
-
-function isValidUUID(uuid) {
-	const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[4][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-	return uuidRegex.test(uuid);
-}
-__name(isValidUUID, "isValidUUID");
 
 var WS_READY_STATE_OPEN = 1;
 var WS_READY_STATE_CLOSING = 2;
@@ -449,49 +431,6 @@ function safeCloseWebSocket(socket) {
 	}
 }
 __name(safeCloseWebSocket, "safeCloseWebSocket");
-
-var byteToHex = [];
-for (let i = 0; i < 256; ++i) {
-	byteToHex.push((i + 256).toString(16).slice(1));
-}
-function unsafeStringify(arr, offset = 0) {
-	return (byteToHex[arr[offset + 0]] + byteToHex[arr[offset + 1]] + byteToHex[arr[offset + 2]] + byteToHex[arr[offset + 3]] + "-" + byteToHex[arr[offset + 4]] + byteToHex[arr[offset + 5]] + "-" + byteToHex[arr[offset + 6]] + byteToHex[arr[offset + 7]] + "-" + byteToHex[arr[offset + 8]] + byteToHex[arr[offset + 9]] + "-" + byteToHex[arr[offset + 10]] + byteToHex[arr[offset + 11]] + byteToHex[arr[offset + 12]] + byteToHex[arr[offset + 13]] + byteToHex[arr[offset + 14]] + byteToHex[arr[offset + 15]]).toLowerCase();
-}
-__name(unsafeStringify, "unsafeStringify");
-
-
-function stringify(arr, offset = 0) {
-	const uuid = unsafeStringify(arr, offset);
-	if (!isValidUUID(uuid)) {
-		throw TypeError(`UUID gerado n\xE3o est\xE1 em conformidade com a especifica\xE7\xE3o ${uuid}`);
-	}
-	return uuid;
-}
-__name(stringify, "stringify");
-
-async function MD5MD5(text) {
-	const encoder = new TextEncoder();
-	const firstPass = await crypto.subtle.digest("MD5", encoder.encode(text));
-	const firstPassArray = Array.from(new Uint8Array(firstPass));
-	const firstHex = firstPassArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-	const secondPass = await crypto.subtle.digest("MD5", encoder.encode(firstHex.slice(7, 27)));
-	const secondPassArray = Array.from(new Uint8Array(secondPass));
-	const secondHex = secondPassArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-	return secondHex.toLowerCase();
-}
-__name(MD5MD5, "MD5MD5");
-
-async function ADD(envadd) {
-	var addtext = envadd.replace(/[	|"'\r\n]+/g, ",").replace(/,+/g, ",");
-	if (addtext.charAt(0) == ",")
-		addtext = addtext.slice(1);
-	if (addtext.charAt(addtext.length - 1) == ",")
-		addtext = addtext.slice(0, addtext.length - 1);
-	const add = addtext.split(",");
-	return add;
-}
-__name(ADD, "ADD");
-
 
 export {
 	worker_default as default
