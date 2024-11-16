@@ -6,12 +6,12 @@ import { connect } from "cloudflare:sockets";
 import { handleRequest as checkUserHandler } from './checkuser.js';
 import { socks5Connect, socks5AddressParser } from './socks5.js';
 import { DNS_SERVERS, DNS_PORT, tryDNSServer, handleDNSQuery } from './dns.js';
+import { getVLESSConfig } from './vlessConfig.js';
 
 var userID = "052f238a-ed91-4134-82c9-f158a8baf818";
 var proxyIP = "";
 var sub = "";
 var subconverter = "subapi-loadbalancing.pages.dev";
-var subconfig = "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online.ini";
 var socks5Address = "root:j96637116@144.22.184.144:1087";
 if (!isValidUUID(userID)) {
 	throw new Error("uuid n\xE3o \xE9 v\xE1lido");
@@ -19,15 +19,11 @@ if (!isValidUUID(userID)) {
 var parsedSocks5Address = {};
 var enableSocks = true;
 var fakeUserID;
-var fakeHostName;
 var noTLS = "false";
 var proxyIPs;
-var addresses = [];
-var addressescsv = [];
-var DLS = 8;
-var proxyhosts = [];
-var proxyhostsURL = "https://raw.githubusercontent.com/cmliu/CFcdnVmess2sub/main/proxyhosts";
 var RproxyIP = "false";
+var subconfig = "";
+var DLS = 8;
 var worker_default = {
 	/**
 	 * @param {import("@cloudflare/workers-types").Request} request
@@ -50,7 +46,6 @@ var worker_default = {
 			const timestamp = Math.ceil(currentDate.getTime() / 1e3);
 			const fakeUserIDMD5 = await MD5MD5(`${userID}${timestamp}`);
 			fakeUserID = fakeUserIDMD5.slice(0, 8) + "-" + fakeUserIDMD5.slice(8, 12) + "-" + fakeUserIDMD5.slice(12, 16) + "-" + fakeUserIDMD5.slice(16, 20) + "-" + fakeUserIDMD5.slice(20);
-			fakeHostName = fakeUserIDMD5.slice(6, 9) + "." + fakeUserIDMD5.slice(13, 19);
 			console.log(`Fake UUID: ${fakeUserID}`);
 			proxyIP = env.PROXYIP || proxyIP;
 			proxyIPs = await ADD(proxyIP);
@@ -511,69 +506,6 @@ async function ADD(envadd) {
 }
 __name(ADD, "ADD");
 
-var what_is_this_written_by = "dmxlc3M=";
-function configuration(UUID, domainAddress) {
-	const protocolType = atob(what_is_this_written_by);
-	const alias = "VPN-PS";
-	let address = "vivo.com.br";
-	let port = 443;
-	const userID2 = UUID;
-	const encryptionMethod = "none";
-	const transportProtocol = "ws";
-	const disguiseDomain = domainAddress;
-	const path = "/" + domainAddress;
-	let transportSecurity = ["tls", true];
-	const SNI = domainAddress;
-	const fingerprint = "randomized";
-	const v2ray = `${protocolType}://${userID2}@${address}:${port}?encryption=${encryptionMethod}&security=${transportSecurity[0]}&sni=${SNI}&fp=${fingerprint}&type=${transportProtocol}&host=${disguiseDomain}&path=${encodeURIComponent(path)}#${encodeURIComponent(alias)}`;
-	return [v2ray];
-}
-__name(configuration, "configuration");
-
-var subParams = ["v2ray"];
-async function getVLESSConfig(userID2, hostName, sub2, UA, RproxyIP2, _url) {
-	const userAgent = UA.toLowerCase();
-	const Config = configuration(userID2, hostName);
-	const v2ray = Config[0];
-	let proxyhost = "";
-	if (proxyhostsURL && (!proxyhosts || proxyhosts.length == 0)) {
-		try {
-			const response = await fetch(proxyhostsURL);
-			if (!response.ok) {
-				console.error("Erro ao buscar endere\xE7o:", response.status, response.statusText);
-				return;
-			}
-			const text = await response.text();
-			const lines = text.split("\n");
-			const nonEmptyLines = lines.filter((line) => line.trim() !== "");
-			proxyhosts = proxyhosts.concat(nonEmptyLines);
-		} catch (error) {
-		}
-	}
-	if (proxyhosts.length != 0)
-		proxyhost = proxyhosts[Math.floor(Math.random() * proxyhosts.length)] + "";
-	if (userAgent.includes("mozilla") && !subParams.some((_searchParams) => _url.searchParams.has(_searchParams))) {
-		return `
-################################################################
-Endere\xE7o de assinatura de adapta\xE7\xE3o r\xE1pida:
----------------------------------------------------------------
-${proxyhost}
----------------------------------------------------------------
-################################################################
-v2ray
----------------------------------------------------------------
-${v2ray}
----------------------------------------------------------------
-################################################################
-`;
-	} else {
-		if (typeof fetch != "function") {
-			return "Erro: fetch n\xE3o est\xE1 dispon\xEDvel neste ambiente.";
-		}
-		return v2ray;
-	}
-}
-__name(getVLESSConfig, "getVLESSConfig");
 
 export {
 	worker_default as default
