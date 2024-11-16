@@ -3,12 +3,12 @@ var __name = (target, value) => __defProp(target, "name", { value, configurable:
 
 // _worker.js
 import { connect } from "cloudflare:sockets";
-import { handleRequest as checkUserHandler } from './checkuser.js';
-import { socks5Connect, socks5AddressParser } from './socks5.js';
-import { DNS_SERVERS, DNS_PORT, tryDNSServer, handleDNSQuery } from './dns.js';
-import { getVLESSConfig } from './vlessConfig.js';
-import { isValidUUID, unsafeStringify, stringify, MD5MD5 } from './uuidUtils.js';
-import { ADD, base64ToArrayBuffer } from './generalUtils.js';
+import { handleRequest as checkUserHandler } from './src/checkuser.js';
+import { socks5Connect, socks5AddressParser } from './src/socks5.js';
+import { DNS_SERVERS, DNS_PORT, tryDNSServer, handleDNSQuery } from './src/dns.js';
+import { getVLESSConfig } from './src/vlessConfig.js';
+import { isValidUUID, unsafeStringify, stringify, MD5MD5 } from './src/uuidUtils.js';
+import { ADD, base64ToArrayBuffer } from './src/generalUtils.js';
 
 var userID = "052f238a-ed91-4134-82c9-f158a8baf818";
 var proxyIP = "";
