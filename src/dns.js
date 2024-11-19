@@ -21,6 +21,7 @@ export async function tryDNSServer(serverInfo, udpChunk, webSocket, vlessHeader,
 }
 
 export async function handleDNSQuery(udpChunk, webSocket, vlessResponseHeader, log) {
+    const WS_READY_STATE_OPEN = 1;
     let lastError = null;
     let vlessHeader = vlessResponseHeader;
     for (const dnsServer of DNS_SERVERS) {

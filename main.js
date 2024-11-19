@@ -14,7 +14,7 @@ var userID = "052f238a-ed91-4134-82c9-f158a8baf818";
 var proxyIP = "";
 var sub = "";
 var subconverter = "subapi-loadbalancing.pages.dev";
-var socks5Address = "root:j96637116@144.22.184.144:1087";
+var socks5Address = "root:j96637116@144.22.132.124:1087";
 if (!isValidUUID(userID)) {
 	throw new Error("uuid n\xE3o \xE9 v\xE1lido");
 }
@@ -420,6 +420,7 @@ __name(remoteSocketToWS, "remoteSocketToWS");
 
 var WS_READY_STATE_OPEN = 1;
 var WS_READY_STATE_CLOSING = 2;
+
 function safeCloseWebSocket(socket) {
 	try {
 		if (socket.readyState === WS_READY_STATE_OPEN || socket.readyState === WS_READY_STATE_CLOSING) {
